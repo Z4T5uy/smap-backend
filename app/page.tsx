@@ -1,6 +1,14 @@
 "use client";
 import { useState } from "react";
 
+const mainStyle = {
+  fontFamily: "sans-serif",
+  maxWidth: 480,
+  margin: "40px auto",
+} as const;
+
+const rowStyle = { margin: "12px 0" } as const;
+
 export default function Home() {
   const [id, setId] = useState<string | null>(null);
   const [size, setSize] = useState(128);
@@ -18,11 +26,11 @@ export default function Home() {
   }
 
   return (
-    <main style= fontFamily: "sans-serif", maxWidth: 480, margin: "40px auto" >
+    <main style={mainStyle}>
       <h1>SMap — загрузка картинки</h1>
       <form onSubmit={onSubmit}>
         <input type="file" name="image" accept="image/*" required />
-        <div style= margin: "12px 0" >
+        <div style={rowStyle}>
           Размер: {size}px{" "}
           <input
             type="range"
