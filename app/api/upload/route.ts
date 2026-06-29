@@ -3,12 +3,21 @@ import { Redis } from "@upstash/redis";
 import sharp from "sharp";
 import { nanoid } from "nanoid";
 
-export const runtime = "nodejs"; // sharp требует Node runtime (не Edge)
+export const runtime = "nodejs";
 
-const redis = Redis.fromEnv();
+function makeRedis() {
+  const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+  const token =
+    process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+  if (!url || !token) {
+    throw new Error("Redis env vars not found (UPSTASH_REDIS_REST_URL/TOKEN)");
+  }
+  return new Redis({ url, token });
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const redis = makeRedis();
     const form = await req.formData();
     const file = form.get("image") as File | null;
     const size = parseInt((form.get("size") as string) ?? "128", 10) || 128;
@@ -20,7 +29,7 @@ export async function POST(req: NextRequest) {
       .png()
       .toBuffer();
 
-    const id = nanoid(6); // короткий ID — влезет в наковальню
+    const id = nanoid(6);
     await redis.set("smap:" + id, png.toString("base64"));
     return NextResponse.json({ id });
   } catch (e: any) {
