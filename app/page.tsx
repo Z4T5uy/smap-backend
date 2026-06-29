@@ -8,21 +8,34 @@ const mainStyle = {
 } as const;
 
 const rowStyle = { margin: "12px 0" } as const;
+const errStyle = { color: "red" } as const;
 
 export default function Home() {
   const [id, setId] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
   const [size, setSize] = useState(128);
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
-    const fd = new FormData(e.currentTarget);
-    fd.set("size", String(size));
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    const json = await res.json();
-    setBusy(false);
-    setId(json.id ?? null);
+    setErr(null);
+    setId(null);
+    try {
+      const fd = new FormData(e.currentTarget);
+      fd.set("size", String(size));
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || !json.id) {
+        setErr(json.error ?? "HTTP " + res.status);
+      } else {
+        setId(json.id);
+      }
+    } catch (e: any) {
+      setErr(String(e?.message ?? e));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -48,6 +61,7 @@ export default function Home() {
           Готово! В наковальне назови предмет: <b>smap:{id}</b>
         </p>
       )}
+      {err && <p style={errStyle}>Ошибка: {err}</p>}
     </main>
   );
 }
